@@ -21,6 +21,8 @@ app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/allocation', require('./routes/allocation.routes'));
 app.use('/api/booking', require('./routes/booking.routes'));
 app.use('/api/maintenance', require('./routes/maintenance.routes'));
+app.use('/api/audit', require('./routes/audit.routes'));
+app.use('/api/reports', require('./routes/report.route'));
 
 app.use("/api/employees", employeeRoutes);
 
