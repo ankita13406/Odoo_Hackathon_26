@@ -19,6 +19,8 @@ app.use('/api/assets', require('./routes/asset.routes'));
 app.use('/api/copilot', require('./routes/copilot'));
 app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/allocation', require('./routes/allocation.routes'));
+app.use('/api/booking', require('./routes/booking.routes'));
+app.use('/api/maintenance', require('./routes/maintenance.routes'));
 
 app.use("/api/employees", employeeRoutes);
 
