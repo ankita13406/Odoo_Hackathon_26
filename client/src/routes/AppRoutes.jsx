@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import DashboardLayout from "../layouts/DashboardLayout";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -17,56 +17,36 @@ import ReportsPage from "../pages/ReportsPage";
 import NotificationsPage from "../pages/NotificationsPage";
 
 export default function AppRoutes() {
-  return (
-    <BrowserRouter>
+    return (
+        <BrowserRouter>
+            <Routes>
 
-      <Routes>
+                <Route path="/" element={<Navigate to="/login" replace />} />
 
-        <Route path="/" element={<Navigate to="/login" replace />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignupPage />} />
 
-        <Route path="/login" element={<LoginPage />} />
+                <Route
+                    element={
+                        <ProtectedRoute>
+                            <DashboardLayout />
+                        </ProtectedRoute>
+                    }
+                >
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route path="/organization-setup" element={<OrganizationSetupPage />} />
+                    <Route path="/assets" element={<AssetsPage />} />
+                    <Route path="/allocation" element={<AllocationPage />} />
+                    <Route path="/booking" element={<BookingPage />} />
+                    <Route path="/maintenance" element={<MaintenancePage />} />
+                    <Route path="/audit" element={<AuditPage />} />
+                    <Route path="/reports" element={<ReportsPage />} />
+                    <Route path="/notifications" element={<NotificationsPage />} />
+                </Route>
 
-        <Route path="/signup" element={<SignupPage />} />
+                <Route path="*" element={<Navigate to="/login" replace />} />
 
-        <Route
-          element={
-            <ProtectedRoute>
-              <DashboardLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route path="/dashboard" element={<DashboardPage />} />
-
-          <Route
-            path="/organization-setup"
-            element={<OrganizationSetupPage />}
-          />
-
-          <Route path="/assets" element={<AssetsPage />} />
-
-          <Route path="/allocation" element={<AllocationPage />} />
-
-          <Route path="/booking" element={<BookingPage />} />
-
-          <Route
-            path="/maintenance"
-            element={<MaintenancePage />}
-          />
-
-          <Route path="/audit" element={<AuditPage />} />
-
-          <Route path="/reports" element={<ReportsPage />} />
-
-          <Route
-            path="/notifications"
-            element={<NotificationsPage />}
-          />
-        </Route>
-
-        <Route path="*" element={<Navigate to="/login" replace />} />
-
-      </Routes>
-
-    </BrowserRouter>
-  );
+            </Routes>
+        </BrowserRouter>
+    );
 }
