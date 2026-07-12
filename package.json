@@ -1,0 +1,27 @@
+{
+  "name": "odoo_hackathon_26",
+  "version": "1.0.0",
+  "description": "AssetFlow - AI-powered Asset Management System for Odoo Hackathon 2026",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "frontend": "npm run dev --prefix client",
+    "backend": "npm run dev --prefix server",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ankita13406/Odoo_Hackathon_26.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/ankita13406/Odoo_Hackathon_26/issues"
+  },
+  "homepage": "https://github.com/ankita13406/Odoo_Hackathon_26#readme",
+  "devDependencies": {
+    "concurrently": "^10.0.3"
+  }
+}
