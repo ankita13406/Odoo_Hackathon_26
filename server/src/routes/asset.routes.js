@@ -3,9 +3,7 @@ const router = require("express").Router();
 const { authMiddleware, requireRole } = require("../middleware/auth");
 const { ok, fail } = require("../utils/response");
 const { nextAssetTag } = require("../utils/assetTag");
-const { PrismaClient } = require("@prisma/client");
-
-const prisma = new PrismaClient();
+const prisma = require("../config/prisma");
 
 router.post(
   "/",
@@ -13,10 +11,38 @@ router.post(
   requireRole("Admin", "AssetManager"),
   async (req, res, next) => {
     try {
+      const {
+        name,
+        categoryId,
+        serialNumber,
+        location,
+        acquisitionDate,
+        acquisitionCost,
+        condition,
+        isBookable,
+        photoUrl,
+      } = req.body;
+
+      if (!name || !categoryId) {
+        return fail(res, "name and categoryId are required", 400);
+      }
+
       const assetTag = await nextAssetTag();
 
       const asset = await prisma.asset.create({
-        data: { ...req.body, assetTag },
+        data: {
+          name,
+          categoryId,
+          serialNumber,
+          location,
+          acquisitionDate: acquisitionDate ? new Date(acquisitionDate) : null,
+          acquisitionCost,
+          condition,
+          isBookable,
+          photoUrl,
+          assetTag,
+          status: "Available",
+        },
       });
 
       ok(res, asset, 201);
@@ -57,6 +83,9 @@ router.get("/", authMiddleware, async (req, res, next) => {
 router.get("/:id/history", authMiddleware, async (req, res, next) => {
   try {
     const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      return fail(res, "Invalid asset id", 400);
+    }
 
     const [allocations, maintenance] = await Promise.all([
       prisma.allocation.findMany({
