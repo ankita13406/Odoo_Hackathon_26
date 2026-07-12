@@ -32,4 +32,10 @@ router.put('/:id', authMiddleware, requireRole('Admin'), async (req, res) => {
   ok(res, cat);
 });
 
+router.delete('/:id', authMiddleware, requireRole('Admin'), async (req, res) => {
+  const id = Number(req.params.id);
+  await prisma.assetCategory.delete({ where: { id } });
+  ok(res, { deleted: true });
+});
+
 module.exports = router;
