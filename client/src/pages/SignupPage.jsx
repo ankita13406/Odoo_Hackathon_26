@@ -1,11 +1,13 @@
-import React from 'react'
+import AuthLayout from "../components/common/AuthLayout";
+import SignupForm from "../components/forms/SignupForm";
 
-const SignupPage = () => {
-  return (
-    <div>
-      signup page
-    </div>
-  )
+export default function SignupPage() {
+    return (
+        <AuthLayout
+            title="Create Employee Account"
+            subtitle="Register to access AssetFlow ERP"
+        >
+            <SignupForm />
+        </AuthLayout>
+    );
 }
-
-export default SignupPage
