@@ -6,7 +6,8 @@ const prisma = new PrismaClient();
 
 const router = express.Router();
 
-router.get("/", authMiddleware, async (req, res) => {
+router.get("/", authMiddleware, async (req, res, next) => {
+  try {
   const { department, role, status } = req.query;
 
   const employees = await prisma.employee.findMany({
@@ -15,19 +16,30 @@ router.get("/", authMiddleware, async (req, res) => {
       role: role || undefined,
       status: status || undefined,
     },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      status: true,
+      departmentId: true,
+      createdAt: true,
       department: true,
     },
   });
 
   ok(res, employees);
+  } catch (err) {
+    next(err);
+  }
 });
 
 router.patch(
   "/:id/promote",
   authMiddleware,
   requireRole("Admin"),
-  async (req, res) => {
+  async (req, res, next) => {
+    try{
     const { role } = req.body; // 'DepartmentHead' | 'AssetManager'
 
     if (!["DepartmentHead", "AssetManager"].includes(role)) {
@@ -44,7 +56,9 @@ router.patch(
     });
 
     ok(res, emp);
+  } catch (err) {
+    next(err);
   }
-);
+});
 
 module.exports = router;
