@@ -15,6 +15,7 @@ app.get('/health', (req, res) => res.json({ success: true, data: 'AssetFlow API 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/departments', require('./routes/departments'));
 app.use('/api/categories', require('./routes/categories'));
+app.use('/api/assets', require('./routes/asset.routes'));
 
 app.use("/api/employees", employeeRoutes);
 
