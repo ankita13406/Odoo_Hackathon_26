@@ -16,7 +16,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/departments', require('./routes/departments'));
 app.use('/api/categories', require('./routes/categories'));
 
-app.use("/employees", employeeRoutes);
+app.use("/api/employees", employeeRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);
