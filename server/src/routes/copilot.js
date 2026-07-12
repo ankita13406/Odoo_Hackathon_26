@@ -1,9 +1,8 @@
 const router = require('express').Router();
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { PrismaClient } = require('@prisma/client');
 const { ok, fail } = require('../utils/response');
 const { authMiddleware } = require('../middleware/auth');
-const prisma = new PrismaClient();
+const prisma = require("../config/prisma");
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // --- Step 1: fixed set of intents the LLM is allowed to pick from ---
@@ -26,7 +25,12 @@ async function whereIsAsset(assetTag) {
     include: { asset: true },
   });
   let holder = null;
-  if (alloc?.employeeId) holder = await prisma.employee.findUnique({ where: { id: alloc.employeeId }, include: { department: true } });
+  if (alloc?.employeeId) {
+    holder = await prisma.employee.findUnique({
+      where: { id: alloc.employeeId },
+      select: { name: true, department: { select: { name: true } } },
+  });
+}
   return {
     found: true, assetTag: asset.assetTag, status: asset.status, condition: asset.condition,
     holderName: holder?.name || null, department: holder?.department?.name || null,
