@@ -52,4 +52,10 @@ router.patch('/:id/deactivate', authMiddleware, requireRole('Admin'), async (req
   ok(res, dept);
 });
 
+router.delete('/:id', authMiddleware, requireRole('Admin'), async (req, res) => {
+  const id = Number(req.params.id);
+  await prisma.department.delete({ where: { id } });
+  ok(res, { deleted: true });
+});
+
 module.exports = router;
