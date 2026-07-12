@@ -313,7 +313,7 @@ setDepartments(departmentsRes.data.data);
   async function onSubmit(data) {
     setRegisterError(null);
     const payload = {
-      assetTag: data.assetTag.trim(),
+      
       name: data.name.trim(),
       categoryId: Number(data.categoryId),
       serialNumber: data.serialNumber?.trim() || null,
@@ -338,8 +338,12 @@ setAssets((prev) => [
       reset();
       setIsRegisterOpen(false);
     } catch (err) {
-      setRegisterError(err.message);
-    }
+    setRegisterError(
+        err.response?.data?.error ||
+        err.message ||
+        "Failed to create asset."
+    );
+}
   }
 
   function closeRegisterModal() {
