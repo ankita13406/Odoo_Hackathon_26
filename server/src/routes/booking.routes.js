@@ -4,7 +4,28 @@ const router = express.Router();
 const prisma = require("../config/prisma");
 const { authMiddleware } = require("../middleware/auth");
 const { ok, fail } = require("../utils/response");
+router.get("/", authMiddleware, async (req, res, next) => {
+  try {
+    const bookings = await prisma.booking.findMany({
+      include: {
+        asset: {
+          select: {
+            id: true,
+            name: true,
+            assetTag: true,
+          },
+        },
+      },
+      orderBy: {
+        startTime: "asc",
+      },
+    });
 
+    ok(res, bookings);
+  } catch (err) {
+    next(err);
+  }
+});
 router.post("/", authMiddleware, async (req, res, next) => {
   try {
     const { assetId, startTime, endTime, bookedById } = req.body;

@@ -1,32 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { CalendarPlus, Search, Clock } from "lucide-react";
 
-// Later
-// import {
-//     getBookings,
-//     createBooking,
-// } from "../api/booking";
-
-const demoBookings = [
-    {
-        id: 1,
-        assetId: 1,
-        asset: "Dell Laptop",
-        bookedBy: "Rahul",
-        startTime: "2026-07-12T10:00",
-        endTime: "2026-07-12T12:00",
-        status: "Upcoming",
-    },
-    {
-        id: 2,
-        assetId: 2,
-        asset: "Projector",
-        bookedBy: "Amit",
-        startTime: "2026-07-12T13:00",
-        endTime: "2026-07-12T15:00",
-        status: "Ongoing",
-    },
-];
+import { getBookings, createBooking } from "../api/booking";
+import { getAssets } from "../api/asset";
+import API from "../api/axios";
 
 const statusStyle = {
     Upcoming: "bg-blue-100 text-blue-700",
@@ -35,9 +12,25 @@ const statusStyle = {
     Cancelled: "bg-red-100 text-red-700",
 };
 
+// Backend responses are wrapped as { success, data: [...] }, but depending
+// on whether a given api/*.js module pre-unwraps axios's response, what we
+// receive here could be a raw axios response, an already-unwrapped
+// envelope, or a plain array. Handle all three so a shape mismatch never
+// crashes the page.
+function extractList(res) {
+    if (Array.isArray(res)) return res;
+    if (Array.isArray(res?.data)) return res.data;
+    if (Array.isArray(res?.data?.data)) return res.data.data;
+    return [];
+}
+
 export default function BookingPage() {
 
     const [bookings, setBookings] = useState([]);
+
+    const [assets, setAssets] = useState([]);
+
+    const [employees, setEmployees] = useState([]);
 
     const [loading, setLoading] = useState(true);
 
@@ -46,10 +39,15 @@ export default function BookingPage() {
     const [openModal, setOpenModal] = useState(false);
 
     const [form, setForm] = useState({
-        asset: "",
-        bookedBy: "",
+
+        assetId: "",
+
+        bookedById: "",
+
         startTime: "",
+
         endTime: "",
+
     });
 
     async function loadBookings() {
@@ -58,24 +56,35 @@ export default function BookingPage() {
 
         try {
 
-            // Later
+            const [
 
-            // const { data } =
-            // await getBookings();
+                bookingRes,
 
-            // setBookings(data.data);
+                assetRes,
 
-            setTimeout(() => {
+                employeeRes,
 
-                setBookings(demoBookings);
+            ] = await Promise.all([
 
-                setLoading(false);
+                getBookings(),
 
-            }, 300);
+                getAssets(),
+
+                API.get("/employees"),
+
+            ]);
+
+            setBookings(extractList(bookingRes));
+
+            setAssets(extractList(assetRes));
+
+            setEmployees(extractList(employeeRes));
 
         } catch (err) {
 
-            console.log(err);
+            console.error(err);
+
+        } finally {
 
             setLoading(false);
 
@@ -89,21 +98,32 @@ export default function BookingPage() {
 
     }, []);
 
+    const employeeMap = useMemo(() => {
+
+        const map = {};
+
+        employees.forEach((employee) => {
+
+            map[employee.id] = employee.name;
+
+        });
+
+        return map;
+
+    }, [employees]);
+
     const filteredBookings = useMemo(() => {
 
-        return bookings.filter((booking) =>
+        return bookings.filter((booking) => {
 
-            booking.asset
+            const assetName =
+                booking.asset?.name || "";
+
+            return assetName
                 .toLowerCase()
-                .includes(search.toLowerCase())
+                .includes(search.toLowerCase());
 
-            ||
-
-            booking.bookedBy
-                .toLowerCase()
-                .includes(search.toLowerCase())
-
-        );
+        });
 
     }, [bookings, search]);
 
@@ -111,41 +131,40 @@ export default function BookingPage() {
 
         e.preventDefault();
 
-        // Later
+        try {
 
-        // await createBooking(form);
+            await createBooking({
 
-        const booking = {
+                assetId: Number(form.assetId),
 
-            id: Date.now(),
+                bookedById: Number(form.bookedById),
 
-            ...form,
+                startTime: form.startTime,
 
-            status: "Upcoming",
+                endTime: form.endTime,
 
-        };
+            });
 
-        setBookings((prev) => [
+            await loadBookings();
 
-            booking,
+            closeModal();
 
-            ...prev,
+        } catch (err) {
 
-        ]);
+            if (err.response?.status === 409) {
 
-        setForm({
+                alert("Slot unavailable");
 
-            asset: "",
+                return;
 
-            bookedBy: "",
+            }
 
-            startTime: "",
+            alert(
+                err.response?.data?.error ||
+                "Booking Failed"
+            );
 
-            endTime: "",
-
-        });
-
-        setOpenModal(false);
+        }
 
     }
 
@@ -155,9 +174,9 @@ export default function BookingPage() {
 
         setForm({
 
-            asset: "",
+            assetId: "",
 
-            bookedBy: "",
+            bookedById: "",
 
             startTime: "",
 
@@ -169,17 +188,28 @@ export default function BookingPage() {
 
     function formatDate(value) {
 
+        if (!value) return "-";
+
         return new Date(value).toLocaleString();
 
     }
-        if (loading) {
+
+    if (loading) {
+
         return (
+
             <div className="flex h-[80vh] items-center justify-center">
+
                 <h2 className="text-xl font-semibold">
+
                     Loading Bookings...
+
                 </h2>
+
             </div>
+
         );
+
     }
 
     return (
@@ -196,7 +226,7 @@ export default function BookingPage() {
                     </h1>
 
                     <p className="mt-1 text-gray-500">
-                        Reserve company assets for employees.
+                        Reserve bookable assets for employees.
                     </p>
 
                 </div>
@@ -208,6 +238,7 @@ export default function BookingPage() {
                     <CalendarPlus size={18} />
 
                     Book Slot
+
                 </button>
 
             </div>
@@ -226,13 +257,13 @@ export default function BookingPage() {
                     onChange={(e) =>
                         setSearch(e.target.value)
                     }
-                    placeholder="Search asset or employee..."
+                    placeholder="Search Asset..."
                     className="w-full rounded-xl border py-3 pl-10 pr-4"
                 />
 
             </div>
 
-            {/* Table */}
+            {/* Booking Table */}
 
             <div className="overflow-hidden rounded-xl border bg-white">
 
@@ -247,7 +278,7 @@ export default function BookingPage() {
                             </th>
 
                             <th className="p-3 text-left">
-                                Booked By
+                                Employee
                             </th>
 
                             <th className="p-3 text-left">
@@ -276,7 +307,9 @@ export default function BookingPage() {
                                     colSpan={5}
                                     className="p-8 text-center text-gray-400"
                                 >
+
                                     No bookings found.
+
                                 </td>
 
                             </tr>
@@ -287,18 +320,25 @@ export default function BookingPage() {
 
                                 <tr
                                     key={booking.id}
-                                    className="border-t"
+                                    className="border-t hover:bg-gray-50"
                                 >
 
-                                    <td className="p-3">
+                                    <td className="p-3 font-medium">
 
-                                        {booking.asset}
+                                        {booking.asset?.assetTag}
+
+                                        <div className="text-sm text-gray-500">
+
+                                            {booking.asset?.name}
+
+                                        </div>
 
                                     </td>
 
                                     <td className="p-3">
 
-                                        {booking.bookedBy}
+                                        {employeeMap[booking.bookedById] ||
+                                            `Employee #${booking.bookedById}`}
 
                                     </td>
 
@@ -321,7 +361,10 @@ export default function BookingPage() {
                                     <td className="p-3">
 
                                         <span
-                                            className={`rounded-full px-3 py-1 text-xs font-medium ${statusStyle[booking.status]}`}
+                                            className={`rounded-full px-3 py-1 text-xs font-medium ${
+                                                statusStyle[booking.status] ||
+                                                "bg-gray-100 text-gray-600"
+                                            }`}
                                         >
 
                                             {booking.status}
@@ -341,14 +384,13 @@ export default function BookingPage() {
                 </table>
 
             </div>
-
-            {/* Modal */}
+                       {/* Booking Modal */}
 
             {openModal && (
 
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
 
-                    <div className="w-full max-w-lg rounded-xl bg-white p-6">
+                    <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
 
                         <h2 className="text-2xl font-bold">
 
@@ -358,8 +400,10 @@ export default function BookingPage() {
 
                         <form
                             onSubmit={submitBooking}
-                            className="mt-6 space-y-4"
+                            className="mt-6 space-y-5"
                         >
+
+                            {/* Asset */}
 
                             <div>
 
@@ -369,22 +413,44 @@ export default function BookingPage() {
 
                                 </label>
 
-                                <input
+                                <select
                                     required
-                                    value={form.asset}
+                                    value={form.assetId}
                                     onChange={(e) =>
                                         setForm({
                                             ...form,
-                                            asset:
-                                                e.target
-                                                    .value,
+                                            assetId: e.target.value,
                                         })
                                     }
-                                    placeholder="Dell Laptop"
                                     className="w-full rounded-lg border p-3"
-                                />
+                                >
+
+                                    <option value="">
+
+                                        Select Asset
+
+                                    </option>
+
+                                    {assets
+                                        .filter(asset => asset.isBookable)
+                                        .map(asset => (
+
+                                            <option
+                                                key={asset.id}
+                                                value={asset.id}
+                                            >
+
+                                                {asset.assetTag} - {asset.name}
+
+                                            </option>
+
+                                        ))}
+
+                                </select>
 
                             </div>
+
+                            {/* Employee */}
 
                             <div>
 
@@ -394,22 +460,42 @@ export default function BookingPage() {
 
                                 </label>
 
-                                <input
+                                <select
                                     required
-                                    value={form.bookedBy}
+                                    value={form.bookedById}
                                     onChange={(e) =>
                                         setForm({
                                             ...form,
-                                            bookedBy:
-                                                e.target
-                                                    .value,
+                                            bookedById: e.target.value,
                                         })
                                     }
-                                    placeholder="Rahul"
                                     className="w-full rounded-lg border p-3"
-                                />
+                                >
+
+                                    <option value="">
+
+                                        Select Employee
+
+                                    </option>
+
+                                    {employees.map(employee => (
+
+                                        <option
+                                            key={employee.id}
+                                            value={employee.id}
+                                        >
+
+                                            {employee.name}
+
+                                        </option>
+
+                                    ))}
+
+                                </select>
 
                             </div>
+
+                            {/* Date Time */}
 
                             <div className="grid grid-cols-2 gap-4">
 
@@ -417,22 +503,18 @@ export default function BookingPage() {
 
                                     <label className="mb-2 block text-sm font-medium">
 
-                                        Start
+                                        Start Time
 
                                     </label>
 
                                     <input
                                         type="datetime-local"
                                         required
-                                        value={
-                                            form.startTime
-                                        }
+                                        value={form.startTime}
                                         onChange={(e) =>
                                             setForm({
                                                 ...form,
-                                                startTime:
-                                                    e.target
-                                                        .value,
+                                                startTime: e.target.value,
                                             })
                                         }
                                         className="w-full rounded-lg border p-3"
@@ -444,22 +526,18 @@ export default function BookingPage() {
 
                                     <label className="mb-2 block text-sm font-medium">
 
-                                        End
+                                        End Time
 
                                     </label>
 
                                     <input
                                         type="datetime-local"
                                         required
-                                        value={
-                                            form.endTime
-                                        }
+                                        value={form.endTime}
                                         onChange={(e) =>
                                             setForm({
                                                 ...form,
-                                                endTime:
-                                                    e.target
-                                                        .value,
+                                                endTime: e.target.value,
                                             })
                                         }
                                         className="w-full rounded-lg border p-3"
@@ -469,23 +547,27 @@ export default function BookingPage() {
 
                             </div>
 
-                            <div className="flex justify-end gap-3 pt-4">
+                            <div className="flex justify-end gap-3 pt-2">
 
                                 <button
                                     type="button"
                                     onClick={closeModal}
-                                    className="rounded-lg border px-5 py-2"
+                                    className="rounded-lg border px-5 py-2 hover:bg-gray-50"
                                 >
+
                                     Cancel
+
                                 </button>
 
                                 <button
                                     type="submit"
                                     className="flex items-center gap-2 rounded-lg bg-teal-600 px-5 py-2 text-white hover:bg-teal-700"
                                 >
+
                                     <Clock size={16} />
 
-                                    Book
+                                    Book Slot
+
                                 </button>
 
                             </div>
@@ -499,5 +581,7 @@ export default function BookingPage() {
             )}
 
         </div>
+
     );
+
 }
