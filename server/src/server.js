@@ -16,6 +16,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/departments', require('./routes/departments'));
 app.use('/api/categories', require('./routes/categories'));
 app.use('/api/assets', require('./routes/asset.routes'));
+app.use('/api/copilot', require('./routes/copilot'));
 
 app.use("/api/employees", employeeRoutes);
 
